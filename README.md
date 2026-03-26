@@ -173,5 +173,4 @@ Actual performance will vary on real audiometric data.
 
 ---
 
-## Co-Authored-By
-Co-Authored-By: Oz <oz-agent@warp.dev>
+
