@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+env/
+venv/
+.env
+ENV/
+
+# Environment variables (sensitive)
+.env
+*.env
+
+# Data files (large / raw data not committed to git)
+data/raw/*.csv
+data/raw/*.wav
+data/raw/*.mp3
+data/raw/*.flac
+data/processed/*.csv
+
+# Trained models (binary artifacts)
+models/*.pkl
+models/*.joblib
+models/*.npy
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Uploads directory
+uploads/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
