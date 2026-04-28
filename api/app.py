@@ -43,7 +43,7 @@ import os
 import sys
 import json
 import numpy as np
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -54,12 +54,13 @@ from config import (
     API_CONFIG,
 )
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 app.config["MAX_CONTENT_LENGTH"] = API_CONFIG["max_content_length"]
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 ALLOWED = {"wav", "mp3", "ogg", "flac"}
+MANUAL_INPUT_FIELDS = DEMO_COLS + FREQ_COLS_LEFT + FREQ_COLS_RIGHT
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +110,48 @@ def _predict_from_array(arr: np.ndarray) -> dict:
 def _allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED
 
+def _derive_manual_features(values: dict) -> dict:
+    """Derive engineered features used during training from manual inputs."""
+    pta_left = np.mean([
+        values["hearing_500hz_left"],
+        values["hearing_1000hz_left"],
+        values["hearing_2000hz_left"],
+        values["hearing_4000hz_left"],
+    ])
+    pta_right = np.mean([
+        values["hearing_500hz_right"],
+        values["hearing_1000hz_right"],
+        values["hearing_2000hz_right"],
+        values["hearing_4000hz_right"],
+    ])
+    return {
+        "pta_left": float(pta_left),
+        "pta_right": float(pta_right),
+        "pta_better": float(min(pta_left, pta_right)),
+        "pta_worse": float(max(pta_left, pta_right)),
+        "hf_avg_left": float(np.mean([values["hearing_4000hz_left"], values["hearing_8000hz_left"]])),
+        "hf_avg_right": float(np.mean([values["hearing_4000hz_right"], values["hearing_8000hz_right"]])),
+        "asym_1khz": float(abs(values["hearing_1000hz_left"] - values["hearing_1000hz_right"])),
+        "asym_4khz": float(abs(values["hearing_4000hz_left"] - values["hearing_4000hz_right"])),
+    }
+
+
+def _parse_manual_input(data: dict):
+    """Validate and coerce manual input payload from JSON to floats."""
+    missing = [field for field in MANUAL_INPUT_FIELDS if field not in data]
+    if missing:
+        return None, f"Missing required fields: {', '.join(missing)}"
+
+    parsed = {}
+    for field in MANUAL_INPUT_FIELDS:
+        try:
+            parsed[field] = float(data[field])
+        except (TypeError, ValueError):
+            return None, f"Field '{field}' must be numeric."
+
+    parsed.update(_derive_manual_features(parsed))
+    return parsed, None
+
 
 def _model_ready():
     if _model is None:
@@ -119,6 +162,10 @@ def _model_ready():
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@app.get("/")
+def index():
+    return render_template("index.html")
 
 @app.get("/health")
 def health():
@@ -134,10 +181,13 @@ def predict_json():
     data = request.get_json(force=True)
     if not data:
         return jsonify({"error": "JSON body required"}), 400
+    parsed, parse_error = _parse_manual_input(data)
+    if parse_error:
+        return jsonify({"error": parse_error}), 400
 
     # Build feature vector in the same order the model was trained on
     try:
-        feature_vec = np.array([data.get(f, 0.0) for f in _features], dtype=float)
+        feature_vec = np.array([parsed.get(f, 0.0) for f in _features], dtype=float)
     except Exception as e:
         return jsonify({"error": f"Feature extraction failed: {e}"}), 400
 
@@ -148,7 +198,7 @@ def predict_json():
     if patient_id:
         try:
             from database.db_manager import insert_audiometric, insert_prediction
-            insert_audiometric(patient_id, data)
+            insert_audiometric(patient_id, parsed)
             insert_prediction(patient_id, result["severity_label"],
                               result["severity_class"], result["confidence"])
         except Exception:

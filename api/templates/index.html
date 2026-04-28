@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hearing Loss Prediction Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="card hero">
+            <p class="eyebrow">AI-Based Hearing Loss Prediction</p>
+            <h1>Clinical Screening Interface</h1>
+            <p>
+                Submit audiometric thresholds or upload an audio sample to estimate hearing-loss severity:
+                <strong>Normal</strong>, <strong>Mild</strong>, <strong>Moderate</strong>, or <strong>Severe</strong>.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Manual audiometric prediction</h2>
+            <p class="subtext">Fill all values to match the model’s expected feature set.</p>
+            <form id="manual-form" novalidate>
+                <div class="form-grid">
+                    <label>
+                        Age
+                        <input type="number" name="age" min="0" max="120" step="1" value="55" required>
+                    </label>
+                    <label>
+                        Gender
+                        <select name="gender" required>
+                            <option value="0">Female (0)</option>
+                            <option value="1" selected>Male (1)</option>
+                        </select>
+                    </label>
+                    <label>
+                        Noise exposure (years)
+                        <input type="number" name="noise_exposure" min="0" max="60" step="0.1" value="15" required>
+                    </label>
+                    <label>
+                        Tinnitus
+                        <select name="tinnitus" required>
+                            <option value="0">No (0)</option>
+                            <option value="1" selected>Yes (1)</option>
+                        </select>
+                    </label>
+                </div>
+
+                <h3>Left ear thresholds (dB HL)</h3>
+                <div class="form-grid">
+                    <label>250 Hz<input type="number" name="hearing_250hz_left" min="0" max="120" step="0.1" value="20" required></label>
+                    <label>500 Hz<input type="number" name="hearing_500hz_left" min="0" max="120" step="0.1" value="35" required></label>
+                    <label>1000 Hz<input type="number" name="hearing_1000hz_left" min="0" max="120" step="0.1" value="45" required></label>
+                    <label>2000 Hz<input type="number" name="hearing_2000hz_left" min="0" max="120" step="0.1" value="55" required></label>
+                    <label>4000 Hz<input type="number" name="hearing_4000hz_left" min="0" max="120" step="0.1" value="65" required></label>
+                    <label>8000 Hz<input type="number" name="hearing_8000hz_left" min="0" max="120" step="0.1" value="75" required></label>
+                </div>
+
+                <h3>Right ear thresholds (dB HL)</h3>
+                <div class="form-grid">
+                    <label>250 Hz<input type="number" name="hearing_250hz_right" min="0" max="120" step="0.1" value="25" required></label>
+                    <label>500 Hz<input type="number" name="hearing_500hz_right" min="0" max="120" step="0.1" value="40" required></label>
+                    <label>1000 Hz<input type="number" name="hearing_1000hz_right" min="0" max="120" step="0.1" value="50" required></label>
+                    <label>2000 Hz<input type="number" name="hearing_2000hz_right" min="0" max="120" step="0.1" value="60" required></label>
+                    <label>4000 Hz<input type="number" name="hearing_4000hz_right" min="0" max="120" step="0.1" value="70" required></label>
+                    <label>8000 Hz<input type="number" name="hearing_8000hz_right" min="0" max="120" step="0.1" value="80" required></label>
+                </div>
+
+                <button class="btn primary" type="submit">Predict from audiometric values</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Audio-based prediction</h2>
+            <p class="subtext">Upload a WAV, MP3, OGG, or FLAC file for model inference.</p>
+            <form id="audio-form" enctype="multipart/form-data">
+                <input id="audio-file" name="file" type="file" accept=".wav,.mp3,.ogg,.flac" required>
+                <button class="btn secondary" type="submit">Predict from audio</button>
+            </form>
+        </section>
+
+        <section id="status-card" class="card hidden">
+            <p id="status-message"></p>
+        </section>
+
+        <section id="result-card" class="card hidden">
+            <div class="result-header">
+                <h2>Prediction result</h2>
+                <span id="severity-badge" class="severity-badge">N/A</span>
+            </div>
+            <div class="result-grid">
+                <article class="metric">
+                    <span class="metric-label">Severity class</span>
+                    <span class="metric-value" id="severity-class">-</span>
+                </article>
+                <article class="metric">
+                    <span class="metric-label">Confidence</span>
+                    <span class="metric-value" id="confidence-value">-</span>
+                </article>
+                <article class="metric">
+                    <span class="metric-label">Input source</span>
+                    <span class="metric-value" id="input-source">-</span>
+                </article>
+            </div>
+            <div>
+                <h3>Class probabilities</h3>
+                <div id="probability-bars"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

@@ -97,6 +97,16 @@ python api/app.py
 python run.py --api
 ```
 
+### Open the web UI
+After the API starts, open:
+```
+http://127.0.0.1:5000/
+```
+The interface supports:
+- Manual audiometric threshold entry
+- Audio file upload prediction
+- Probability breakdown visualization
+
 ---
 
 ## API Endpoints
